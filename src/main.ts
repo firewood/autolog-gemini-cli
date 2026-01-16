@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const DEFAULT_CMD_FILE = 'cmd';
-const DEFAULT_HISTORY_FILE = 'history.md';
+const DEFAULT_HISTORY_FILE = '.gemini/history.md';
 
 function main() {
   // Get file names from command line arguments or use defaults
