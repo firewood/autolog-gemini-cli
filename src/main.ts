@@ -2,17 +2,21 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const CMD_FILE = 'cmd';
-const HISTORY_FILE = 'history.md';
+const DEFAULT_CMD_FILE = 'cmd';
+const DEFAULT_HISTORY_FILE = 'history.md';
 
 function main() {
-  const cwd = process.cwd();
-  const cmdPath = path.join(cwd, CMD_FILE);
-  const historyPath = path.join(cwd, HISTORY_FILE);
+  // Get file names from command line arguments or use defaults
+  const cmdFileName = process.argv[2] || DEFAULT_CMD_FILE;
+  const historyFileName = process.argv[3] || DEFAULT_HISTORY_FILE;
 
-  // Check if 'cmd' file exists
+  const cwd = process.cwd();
+  const cmdPath = path.join(cwd, cmdFileName);
+  const historyPath = path.join(cwd, historyFileName);
+
+  // Check if command file exists
   if (!fs.existsSync(cmdPath)) {
-    console.error(`Error: '${CMD_FILE}' file not found in ${cwd}`);
+    console.error(`Error: '${cmdFileName}' file not found in ${cwd}`);
     process.exit(1);
   }
 
@@ -21,9 +25,6 @@ function main() {
     const timestamp = new Date().toLocaleString();
     
     // Format the entry
-    // We'll wrap the content in a code block if it looks like code, 
-    // but for general text, maybe just a quote or plain text. 
-    // Let's use a clear delimiter.
     const entry = `
 ## [${timestamp}] Command Content
 
@@ -34,9 +35,9 @@ ${cmdContent}
 ---
 `;
 
-    // Append to history.md
+    // Append to history file
     fs.appendFileSync(historyPath, entry);
-    console.log(`Successfully appended content of '${CMD_FILE}' to '${HISTORY_FILE}'`);
+    console.log(`Successfully appended content of '${cmdFileName}' to '${historyFileName}'`);
 
   } catch (error) {
     console.error('An error occurred:', error);
