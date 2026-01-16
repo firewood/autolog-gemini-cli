@@ -1,0 +1,18 @@
+# .gemini/commands/cmd.toml
+
+# コマンドの説明
+description = "cmdファイルの内容をプロンプトとして送信し、history.mdに記録する"
+
+# プロンプト設定
+# @cmd はカレントディレクトリの 'cmd' ファイルの内容に展開されることを想定しています
+prompt = "@cmd"
+
+# フック設定 (仮想的な設定例)
+# Gemini CLIが外部コマンドの実行をサポートしている場合、ここで指定します。
+# autolog-gemini-cli が PATH に通っているか、フルパスで指定する必要があります。
+[hooks]
+# プロンプト送信前にログを記録する場合
+pre_command = "autolog-gemini-cli"
+
+# または、送信後に記録する場合
+# post_command = "autolog-gemini-cli"
