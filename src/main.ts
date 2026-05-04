@@ -70,8 +70,7 @@ async function main() {
       process.exit(1);
     }
     const timestamp = formatTimestamp(new Date());
-    const entry = `
-## ${timestamp} ${agent}
+    const entry = `## ${timestamp} ${agent}
 ${prompt}
 
 --
