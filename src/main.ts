@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 
 const CODING_AGENTS = ['claude', 'codex', 'gemini'] as const;
@@ -45,8 +46,9 @@ async function main() {
     process.exit(1);
   }
 
-  const historyFileName = path.join(`.${agent}`, 'history.md');
-  const historyPath = path.join(resolvedProjectDir, historyFileName);
+  const projectName = path.basename(resolvedProjectDir);
+  const historyFileName = path.join('vibe-coding-memo', projectName, 'history.md');
+  const historyPath = path.join(os.homedir(), historyFileName);
 
   try {
     const input = await readStdin();
