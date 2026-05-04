@@ -2,42 +2,76 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const DEFAULT_CMD_FILE = 'cmd';
-const DEFAULT_HISTORY_FILE = '.gemini/history.md';
+const CODING_AGENTS = ['claude', 'codex', 'gemini'] as const;
+type CodingAgent = (typeof CODING_AGENTS)[number];
 
-function main() {
-  // Get file names from command line arguments or use defaults
-  const cmdFileName = process.argv[2] || DEFAULT_CMD_FILE;
-  const historyFileName = process.argv[3] || DEFAULT_HISTORY_FILE;
+function isCodingAgent(value: string): value is CodingAgent {
+  return CODING_AGENTS.includes(value as CodingAgent);
+}
 
-  const cwd = process.cwd();
-  const cmdPath = path.join(cwd, cmdFileName);
-  const historyPath = path.join(cwd, historyFileName);
+function readStdin(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let input = '';
 
-  // Check if command file exists
-  if (!fs.existsSync(cmdPath)) {
-    console.error(`Error: '${cmdFileName}' file not found in ${cwd}`);
+    process.stdin.setEncoding('utf-8');
+    process.stdin.on('data', (chunk) => {
+      input += chunk;
+    });
+    process.stdin.on('end', () => {
+      resolve(input);
+    });
+    process.stdin.on('error', reject);
+  });
+}
+
+async function main() {
+  const agent = process.argv[2];
+  const projectDir = process.argv[3];
+
+  if (!agent || !projectDir) {
+    console.error('Usage: autolog-gemini-cli <claude|codex|gemini> <project-directory>');
     process.exit(1);
   }
 
+  if (!isCodingAgent(agent)) {
+    console.error(`Error: unsupported coding agent '${agent}'. Expected one of: ${CODING_AGENTS.join(', ')}`);
+    process.exit(1);
+  }
+
+  const resolvedProjectDir = path.resolve(projectDir);
+
+  if (!fs.existsSync(resolvedProjectDir) || !fs.statSync(resolvedProjectDir).isDirectory()) {
+    console.error(`Error: project directory not found: ${resolvedProjectDir}`);
+    process.exit(1);
+  }
+
+  const historyFileName = path.join(`.${agent}`, 'history.md');
+  const historyPath = path.join(resolvedProjectDir, historyFileName);
+
   try {
-    const cmdContent = fs.readFileSync(cmdPath, 'utf-8');
+    const input = await readStdin();
+    const payload = JSON.parse(input);
+
+    if (typeof payload.prompt !== 'string') {
+      console.error('Error: input JSON must contain a string prompt field');
+      process.exit(1);
+    }
+
     const timestamp = new Date().toLocaleString();
-    
-    // Format the entry
+
     const entry = `
-## [${timestamp}] Command Content
+## [${timestamp}] Prompt
 
 \`\`\`
-${cmdContent}
+${payload.prompt}
 \`\`\`
 
 ---
 `;
 
-    // Append to history file
+    fs.mkdirSync(path.dirname(historyPath), { recursive: true });
     fs.appendFileSync(historyPath, entry);
-    console.log(`Successfully appended content of '${cmdFileName}' to '${historyFileName}'`);
+    console.log(`Successfully appended prompt to '${historyFileName}'`);
 
   } catch (error) {
     console.error('An error occurred:', error);
