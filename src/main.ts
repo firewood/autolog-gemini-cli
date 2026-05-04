@@ -3,8 +3,8 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 
-const CODING_AGENTS = ['claude', 'codex', 'gemini'] as const;
-type CodingAgent = (typeof CODING_AGENTS)[number];
+type CodingAgent = 'claude' | 'codex' | 'gemini';
+const CODING_AGENTS: readonly CodingAgent[] = ['claude', 'codex', 'gemini'];
 
 function isCodingAgent(value: string): value is CodingAgent {
   return CODING_AGENTS.includes(value as CodingAgent);
@@ -23,6 +23,17 @@ function readStdin(): Promise<string> {
     });
     process.stdin.on('error', reject);
   });
+}
+
+function formatTimestamp(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
 async function main() {
@@ -53,24 +64,19 @@ async function main() {
   try {
     const input = await readStdin();
     const payload = JSON.parse(input);
-
-    if (typeof payload.prompt !== 'string') {
+    const prompt = payload.prompt;
+    if (typeof prompt !== 'string') {
       console.error('Error: input JSON must contain a string prompt field');
       process.exit(1);
     }
-
-    const timestamp = new Date().toLocaleString();
-
+    const timestamp = formatTimestamp(new Date());
     const entry = `
-## [${timestamp}] Prompt
+## ${timestamp} ${agent}
+${prompt}
 
-\`\`\`
-${payload.prompt}
-\`\`\`
+--
 
----
 `;
-
     fs.mkdirSync(path.dirname(historyPath), { recursive: true });
     fs.appendFileSync(historyPath, entry);
     console.log(`Successfully appended prompt to '${historyFileName}'`);
