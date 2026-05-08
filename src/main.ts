@@ -36,9 +36,7 @@ function formatTimestamp(date: Date): string {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
-function appendContent(content: string, agent: CodingAgent, projectName: string, fileName: string) {
-  const relativePath = path.join('vibe-coding-memo', projectName, fileName);
-  const fullPath = path.join(os.homedir(), relativePath);
+function appendContent(content: string, agent: CodingAgent, fullPath: string) {
   const timestamp = formatTimestamp(new Date());
   const entry = `## ${timestamp} ${agent}
 ${content}
@@ -48,6 +46,10 @@ ${content}
 `;
   fs.mkdirSync(path.dirname(fullPath), { recursive: true });
   fs.appendFileSync(fullPath, entry);
+}
+
+function resolveLogPath(projectName: string, fileName: string): string {
+  return path.join(os.homedir(), 'vibe-coding-memo', projectName, fileName);
 }
 
 function writeContinueResponse(agent: CodingAgent) {
@@ -84,17 +86,20 @@ async function main() {
     const payload = JSON.parse(input);
     const eventName = payload.hook_event_name;
 
+    const historyPath = resolveLogPath(projectName, 'history.md');
+    const responsePath = resolveLogPath(projectName, 'response.md');
+
     if (agent === 'claude' || agent === 'codex') {
       if (eventName === 'UserPromptSubmit') {
         const prompt = payload.prompt;
         if (typeof prompt === 'string') {
-          appendContent(prompt, agent, projectName, 'history.md');
+          appendContent(prompt, agent, historyPath);
         }
       }
       if (eventName === 'Stop') {
         const lastAssistantMessage = payload.last_assistant_message;
         if (typeof lastAssistantMessage === 'string') {
-          appendContent(lastAssistantMessage, agent, projectName, 'response.md');
+          appendContent(lastAssistantMessage, agent, responsePath);
         }
       }
       writeContinueResponse(agent);
@@ -104,13 +109,13 @@ async function main() {
       if (eventName === 'BeforeAgent') {
         const prompt = payload.prompt;
         if (typeof prompt === 'string') {
-          appendContent(prompt, agent, projectName, 'history.md');
+          appendContent(prompt, agent, historyPath);
         }
       }
       if (eventName === 'AfterAgent') {
         const promptResponse = payload.prompt_response;
         if (typeof promptResponse === 'string') {
-          appendContent(promptResponse, agent, projectName, 'response.md');
+          appendContent(promptResponse, agent, responsePath);
         }
       }
     }
