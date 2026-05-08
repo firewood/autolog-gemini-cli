@@ -78,8 +78,9 @@ async function main() {
     const input = await readStdin();
     const payload = JSON.parse(input);
 
+    const eventName = payload.hook_event_name;
+
     if (agent === 'claude' || agent === 'codex') {
-      const eventName = payload.hook_event_name;
       if (eventName === 'UserPromptSubmit') {
         const prompt = payload.prompt;
         if (typeof prompt !== 'string') {
@@ -101,12 +102,18 @@ async function main() {
       return;
     }
 
-    const prompt = payload.prompt;
-    if (typeof prompt !== 'string') {
-      console.error('Error: input JSON must contain a string prompt field');
-      process.exit(1);
+    if (agent === 'gemini') {
+      if (eventName === 'BeforeAgent') {
+        const prompt = payload.prompt;
+        if (typeof prompt !== 'string') {
+          console.error('Error: BeforeAgent payload must contain a string prompt field');
+          process.exit(1);
+        }
+        appendContent(prompt, agent, projectName, 'history.md');
+        return;
+      }
+      return;
     }
-    appendContent(prompt, agent, projectName, 'history.md');
 
   } catch (error) {
     console.error('An error occurred:', error);
