@@ -78,7 +78,7 @@ async function main() {
     const input = await readStdin();
     const payload = JSON.parse(input);
 
-    if (agent === 'claude') {
+    if (agent === 'claude' || agent === 'codex') {
       const eventName = payload.hook_event_name;
       if (eventName === 'UserPromptSubmit') {
         const prompt = payload.prompt;
@@ -89,7 +89,15 @@ async function main() {
         appendContent(prompt, agent, projectName, 'history.md');
         return;
       }
-      // TODO: handle agent summary events (e.g. Stop) by writing to response.md
+      if (eventName === 'Stop') {
+        const lastAssistantMessage = payload.last_assistant_message;
+        if (typeof lastAssistantMessage !== 'string') {
+          console.error('Error: Stop payload must contain a string last_assistant_message field');
+          process.exit(1);
+        }
+        appendContent(lastAssistantMessage, agent, projectName, 'response.md');
+        return;
+      }
       return;
     }
 
