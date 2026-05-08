@@ -36,6 +36,21 @@ function formatTimestamp(date: Date): string {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
+function appendContent(content: string, agent: CodingAgent, projectName: string, fileName: string) {
+  const relativePath = path.join('vibe-coding-memo', projectName, fileName);
+  const fullPath = path.join(os.homedir(), relativePath);
+  const timestamp = formatTimestamp(new Date());
+  const entry = `## ${timestamp} ${agent}
+${content}
+
+--
+
+`;
+  fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+  fs.appendFileSync(fullPath, entry);
+  console.log(`Successfully appended content to '${relativePath}'`);
+}
+
 async function main() {
   const agent = process.argv[2];
   const projectDir = process.argv[3];
@@ -58,27 +73,32 @@ async function main() {
   }
 
   const projectName = path.basename(resolvedProjectDir);
-  const historyFileName = path.join('vibe-coding-memo', projectName, 'history.md');
-  const historyPath = path.join(os.homedir(), historyFileName);
 
   try {
     const input = await readStdin();
     const payload = JSON.parse(input);
+
+    if (agent === 'claude') {
+      const eventName = payload.hook_event_name;
+      if (eventName === 'UserPromptSubmit') {
+        const prompt = payload.prompt;
+        if (typeof prompt !== 'string') {
+          console.error('Error: UserPromptSubmit payload must contain a string prompt field');
+          process.exit(1);
+        }
+        appendContent(prompt, agent, projectName, 'history.md');
+        return;
+      }
+      // TODO: handle agent summary events (e.g. Stop) by writing to response.md
+      return;
+    }
+
     const prompt = payload.prompt;
     if (typeof prompt !== 'string') {
       console.error('Error: input JSON must contain a string prompt field');
       process.exit(1);
     }
-    const timestamp = formatTimestamp(new Date());
-    const entry = `## ${timestamp} ${agent}
-${prompt}
-
---
-
-`;
-    fs.mkdirSync(path.dirname(historyPath), { recursive: true });
-    fs.appendFileSync(historyPath, entry);
-    console.log(`Successfully appended prompt to '${historyFileName}'`);
+    appendContent(prompt, agent, projectName, 'history.md');
 
   } catch (error) {
     console.error('An error occurred:', error);
