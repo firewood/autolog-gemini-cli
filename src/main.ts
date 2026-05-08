@@ -48,7 +48,12 @@ ${content}
 `;
   fs.mkdirSync(path.dirname(fullPath), { recursive: true });
   fs.appendFileSync(fullPath, entry);
-  console.log(`Successfully appended content to '${relativePath}'`);
+}
+
+function writeContinueResponse(agent: CodingAgent) {
+  if (agent === 'claude' || agent === 'codex') {
+    console.log('{ "continue": true }');
+  }
 }
 
 async function main() {
@@ -88,6 +93,7 @@ async function main() {
           process.exit(1);
         }
         appendContent(prompt, agent, projectName, 'history.md');
+        writeContinueResponse(agent);
         return;
       }
       if (eventName === 'Stop') {
@@ -97,8 +103,10 @@ async function main() {
           process.exit(1);
         }
         appendContent(lastAssistantMessage, agent, projectName, 'response.md');
+        writeContinueResponse(agent);
         return;
       }
+      writeContinueResponse(agent);
       return;
     }
 
