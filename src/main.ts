@@ -82,54 +82,37 @@ async function main() {
   try {
     const input = await readStdin();
     const payload = JSON.parse(input);
-
     const eventName = payload.hook_event_name;
 
     if (agent === 'claude' || agent === 'codex') {
       if (eventName === 'UserPromptSubmit') {
         const prompt = payload.prompt;
-        if (typeof prompt !== 'string') {
-          console.error('Error: UserPromptSubmit payload must contain a string prompt field');
-          process.exit(1);
+        if (typeof prompt === 'string') {
+          appendContent(prompt, agent, projectName, 'history.md');
         }
-        appendContent(prompt, agent, projectName, 'history.md');
-        writeContinueResponse(agent);
-        return;
       }
       if (eventName === 'Stop') {
         const lastAssistantMessage = payload.last_assistant_message;
-        if (typeof lastAssistantMessage !== 'string') {
-          console.error('Error: Stop payload must contain a string last_assistant_message field');
-          process.exit(1);
+        if (typeof lastAssistantMessage === 'string') {
+          appendContent(lastAssistantMessage, agent, projectName, 'response.md');
         }
-        appendContent(lastAssistantMessage, agent, projectName, 'response.md');
-        writeContinueResponse(agent);
-        return;
       }
       writeContinueResponse(agent);
-      return;
     }
 
     if (agent === 'gemini') {
       if (eventName === 'BeforeAgent') {
         const prompt = payload.prompt;
-        if (typeof prompt !== 'string') {
-          console.error('Error: BeforeAgent payload must contain a string prompt field');
-          process.exit(1);
+        if (typeof prompt === 'string') {
+          appendContent(prompt, agent, projectName, 'history.md');
         }
-        appendContent(prompt, agent, projectName, 'history.md');
-        return;
       }
       if (eventName === 'AfterAgent') {
         const promptResponse = payload.prompt_response;
-        if (typeof promptResponse !== 'string') {
-          console.error('Error: AfterAgent payload must contain a string prompt_response field');
-          process.exit(1);
+        if (typeof promptResponse === 'string') {
+          appendContent(promptResponse, agent, projectName, 'response.md');
         }
-        appendContent(promptResponse, agent, projectName, 'response.md');
-        return;
       }
-      return;
     }
 
   } catch (error) {
