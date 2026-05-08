@@ -3,10 +3,10 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 
-type CodingAgent = "claude" | "codex" | "gemini";
-const CODING_AGENTS: readonly CodingAgent[] = ["claude", "codex", "gemini"];
+export type CodingAgent = "claude" | "codex" | "gemini";
+export const CODING_AGENTS: readonly CodingAgent[] = ["claude", "codex", "gemini"];
 
-function isCodingAgent(value: string): value is CodingAgent {
+export function isCodingAgent(value: string): value is CodingAgent {
   return CODING_AGENTS.includes(value as CodingAgent);
 }
 
@@ -25,7 +25,7 @@ function readStdin(): Promise<string> {
   });
 }
 
-function formatTimestamp(date: Date): string {
+export function formatTimestamp(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
@@ -48,7 +48,7 @@ ${content}
   fs.appendFileSync(fullPath, entry);
 }
 
-function resolveLogPath(projectName: string, fileName: string): string {
+export function resolveLogPath(projectName: string, fileName: string): string {
   return path.join(os.homedir(), "vibe-coding-memo", projectName, fileName);
 }
 
@@ -125,4 +125,6 @@ async function main() {
   }
 }
 
-main();
+if (require.main === module) {
+  main();
+}
