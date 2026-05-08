@@ -112,6 +112,15 @@ async function main() {
         appendContent(prompt, agent, projectName, 'history.md');
         return;
       }
+      if (eventName === 'AfterAgent') {
+        const promptResponse = payload.prompt_response;
+        if (typeof promptResponse !== 'string') {
+          console.error('Error: AfterAgent payload must contain a string prompt_response field');
+          process.exit(1);
+        }
+        appendContent(promptResponse, agent, projectName, 'response.md');
+        return;
+      }
       return;
     }
 
